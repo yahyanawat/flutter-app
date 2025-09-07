@@ -29,39 +29,73 @@ class WeatherScreen extends StatefulWidget {
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
+  final _cityController = TextEditingController();
+  final _countryController = TextEditingController();
   String _temperature = '';
   String _weatherCode = '';
-  bool _isLoading = true;
+  String _location = '';
+  bool _isLoading = false;
 
   @override
-  void initState() {
-    super.initState();
-    _fetchWeather();
+  void dispose() {
+    _cityController.dispose();
+    _countryController.dispose();
+    super.dispose();
   }
 
-  Future<void> _fetchWeather() async {
-    // For simplicity, we're using a hardcoded location (London, UK).
-    // You can replace these with any other latitude and longitude.
-    const latitude = 51.5074;
-    const longitude = -0.1278;
-    const url =
-        'https://api.open-meteo.com/v1/forecast?latitude=$latitude&longitude=$longitude&current_weather=true';
+  Future<void> _fetchWeather(String city, String country) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    const apiKey = '68bcd70880f7c981758696okua3f99c';
+    final geocodingUrl =
+        'https://geocode.maps.co/search?q=$city,$country&api_key=$apiKey';
 
     try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          _temperature = data['current_weather']['temperature'].toString();
-          _weatherCode = data['current_weather']['weathercode'].toString();
-          _isLoading = false;
-        });
+      final geocodingResponse = await http.get(Uri.parse(geocodingUrl));
+
+      if (geocodingResponse.statusCode == 200) {
+        final geocodingData = json.decode(geocodingResponse.body);
+        if (geocodingData.isNotEmpty) {
+          final lat = geocodingData[0]['lat'];
+          final lon = geocodingData[0]['lon'];
+
+          final weatherUrl =
+              'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current_weather=true';
+
+          final weatherResponse = await http.get(Uri.parse(weatherUrl));
+
+          if (weatherResponse.statusCode == 200) {
+            final weatherData = json.decode(weatherResponse.body);
+            setState(() {
+              _temperature =
+                  weatherData['current_weather']['temperature'].toString();
+              _weatherCode =
+                  weatherData['current_weather']['weathercode'].toString();
+              _location = '$city, $country';
+              _isLoading = false;
+            });
+          } else {
+            // Handle weather API error
+            setState(() {
+              _isLoading = false;
+            });
+            print('Failed to load weather data');
+          }
+        } else {
+          // Handle geocoding not found
+          setState(() {
+            _isLoading = false;
+          });
+          print('Location not found');
+        }
       } else {
-        // Handle error
+        // Handle geocoding API error
         setState(() {
           _isLoading = false;
         });
-        print('Failed to load weather data');
+        print('Failed to load geocoding data');
       }
     } catch (e) {
       // Handle exception
@@ -78,34 +112,69 @@ class _WeatherScreenState extends State<WeatherScreen> {
       appBar: AppBar(
         title: const Text('Flutter Weather App'),
       ),
-      body: Center(
-        child: _isLoading
-            ? const CircularProgressIndicator()
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  const Text(
-                    'Current Weather in London:',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Temperature: $_temperature°C',
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Weather Code: $_weatherCode',
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                  const SizedBox(height: 20),
-                   Text(
-                    getWeatherInterpretation(_weatherCode),
-                    style: const TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            TextField(
+              controller: _cityController,
+              decoration: const InputDecoration(
+                labelText: 'City',
+                border: OutlineInputBorder(),
               ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _countryController,
+              decoration: const InputDecoration(
+                labelText: 'Country',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                final city = _cityController.text;
+                final country = _countryController.text;
+                if (city.isNotEmpty && country.isNotEmpty) {
+                  _fetchWeather(city, country);
+                }
+              },
+              child: const Text('Get Weather'),
+            ),
+            const SizedBox(height: 20),
+            _isLoading
+                ? const CircularProgressIndicator()
+                : _location.isEmpty
+                    ? Container()
+                    : Column(
+                        children: [
+                          Text(
+                            'Current Weather in $_location:',
+                            style: const TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Temperature: $_temperature°C',
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Weather Code: $_weatherCode',
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                           const SizedBox(height: 20),
+                           Text(
+                            getWeatherInterpretation(_weatherCode),
+                            style: const TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+          ],
+        ),
       ),
     );
   }
