@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'screens/country_screen.dart';
+import 'screens/city_screen.dart';
 
 void main() {
   runApp(const WeatherApp());
@@ -29,19 +31,12 @@ class WeatherScreen extends StatefulWidget {
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
-  final _cityController = TextEditingController();
-  final _countryController = TextEditingController();
+  String? _selectedCountry;
+  String? _selectedCity;
   String _temperature = '';
   String _weatherCode = '';
   String _location = '';
   bool _isLoading = false;
-
-  @override
-  void dispose() {
-    _cityController.dispose();
-    _countryController.dispose();
-    super.dispose();
-  }
 
   Future<void> _fetchWeather(String city, String country) async {
     setState(() {
@@ -117,31 +112,41 @@ class _WeatherScreenState extends State<WeatherScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            TextField(
-              controller: _cityController,
-              decoration: const InputDecoration(
-                labelText: 'City',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _countryController,
-              decoration: const InputDecoration(
-                labelText: 'Country',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                final city = _cityController.text;
-                final country = _countryController.text;
-                if (city.isNotEmpty && country.isNotEmpty) {
-                  _fetchWeather(city, country);
+              onPressed: () async {
+                final selectedCountry = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CountryScreen()),
+                );
+                if (selectedCountry != null) {
+                  setState(() {
+                    _selectedCountry = selectedCountry;
+                    _selectedCity = null;
+                  });
                 }
               },
-              child: const Text('Get Weather'),
+              child: Text(_selectedCountry ?? 'Select Country'),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _selectedCountry == null
+                  ? null
+                  : () async {
+                      final selectedCity = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              CityScreen(countryName: _selectedCountry!),
+                        ),
+                      );
+                      if (selectedCity != null) {
+                        setState(() {
+                          _selectedCity = selectedCity;
+                        });
+                        _fetchWeather(_selectedCity!, _selectedCountry!);
+                      }
+                    },
+              child: Text(_selectedCity ?? 'Select City'),
             ),
             const SizedBox(height: 20),
             _isLoading
