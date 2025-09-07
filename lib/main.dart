@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'locations.dart';
 
 void main() {
   runApp(const WeatherApp());
@@ -29,18 +30,37 @@ class WeatherScreen extends StatefulWidget {
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
-  final _cityController = TextEditingController();
-  final _countryController = TextEditingController();
+  String? _selectedCountry;
+  String? _selectedCity;
+  List<String> _countries = [];
+  List<String> _cities = [];
+
   String _temperature = '';
   String _weatherCode = '';
   String _location = '';
   bool _isLoading = false;
 
   @override
-  void dispose() {
-    _cityController.dispose();
-    _countryController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _countries = locations.keys.toList();
+  }
+
+  void _onCountryChanged(String? newValue) {
+    setState(() {
+      _selectedCountry = newValue;
+      _selectedCity = null;
+      _cities = locations[newValue!] ?? [];
+      if (_cities.isNotEmpty) {
+        _selectedCity = _cities.first;
+      }
+    });
+  }
+
+  void _onCityChanged(String? newValue) {
+    setState(() {
+      _selectedCity = newValue;
+    });
   }
 
   Future<void> _fetchWeather(String city, String country) async {
@@ -117,28 +137,36 @@ class _WeatherScreenState extends State<WeatherScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            TextField(
-              controller: _cityController,
-              decoration: const InputDecoration(
-                labelText: 'City',
-                border: OutlineInputBorder(),
-              ),
+            DropdownButton<String>(
+              isExpanded: true,
+              value: _selectedCountry,
+              hint: const Text('Select Country'),
+              items: _countries.map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              onChanged: _onCountryChanged,
             ),
             const SizedBox(height: 10),
-            TextField(
-              controller: _countryController,
-              decoration: const InputDecoration(
-                labelText: 'Country',
-                border: OutlineInputBorder(),
-              ),
+            DropdownButton<String>(
+              isExpanded: true,
+              value: _selectedCity,
+              hint: const Text('Select City'),
+              items: _cities.map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              onChanged: _cities.isEmpty ? null : _onCityChanged,
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                final city = _cityController.text;
-                final country = _countryController.text;
-                if (city.isNotEmpty && country.isNotEmpty) {
-                  _fetchWeather(city, country);
+                if (_selectedCity != null && _selectedCountry != null) {
+                  _fetchWeather(_selectedCity!, _selectedCountry!);
                 }
               },
               child: const Text('Get Weather'),
