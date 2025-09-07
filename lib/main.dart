@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'weather_icons.dart';
 
 void main() {
   runApp(const WeatherApp());
@@ -166,10 +167,9 @@ class _WeatherScreenState extends State<WeatherScreen> {
                             style: const TextStyle(fontSize: 20),
                           ),
                            const SizedBox(height: 20),
-                           Text(
-                            getWeatherInterpretation(_weatherCode),
-                            style: const TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
-                            textAlign: TextAlign.center,
+                           Icon(
+                            getWeatherIcon(_weatherCode),
+                            size: 64,
                           ),
                         ],
                       ),
@@ -179,52 +179,52 @@ class _WeatherScreenState extends State<WeatherScreen> {
     );
   }
 
-  String getWeatherInterpretation(String code) {
+  IconData getWeatherIcon(String code) {
     int weatherCode = int.tryParse(code) ?? 0;
     switch (weatherCode) {
       case 0:
-        return 'Clear sky';
+        return WeatherIcons.clearSky;
       case 1:
       case 2:
       case 3:
-        return 'Mainly clear, partly cloudy, and overcast';
+        return WeatherIcons.mainlyClear;
       case 45:
       case 48:
-        return 'Fog and depositing rime fog';
+        return WeatherIcons.fog;
       case 51:
       case 53:
       case 55:
-        return 'Drizzle: Light, moderate, and dense intensity';
+        return WeatherIcons.drizzle;
       case 56:
       case 57:
-        return 'Freezing Drizzle: Light and dense intensity';
+        return WeatherIcons.freezingDrizzle;
       case 61:
       case 63:
       case 65:
-        return 'Rain: Slight, moderate and heavy intensity';
+        return WeatherIcons.rain;
       case 66:
       case 67:
-        return 'Freezing Rain: Light and heavy intensity';
+        return WeatherIcons.freezingRain;
       case 71:
       case 73:
       case 75:
-        return 'Snow fall: Slight, moderate, and heavy intensity';
+        return WeatherIcons.snowFall;
       case 77:
-        return 'Snow grains';
+        return WeatherIcons.snowGrains;
       case 80:
       case 81:
       case 82:
-        return 'Rain showers: Slight, moderate, and violent';
+        return WeatherIcons.rainShowers;
       case 85:
       case 86:
-        return 'Snow showers slight and heavy';
+        return WeatherIcons.snowShowers;
       case 95:
-        return 'Thunderstorm: Slight or moderate';
+        return WeatherIcons.thunderstorm;
       case 96:
       case 99:
-        return 'Thunderstorm with slight and heavy hail';
+        return WeatherIcons.thunderstorm;
       default:
-        return 'Unknown weather';
+        return WeatherIcons.unknown;
     }
   }
 }
