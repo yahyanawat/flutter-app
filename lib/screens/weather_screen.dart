@@ -60,11 +60,12 @@ class _WeatherScreenState extends State<WeatherScreen> {
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 500),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 500),
                   child: _buildWeatherInfo(),
                 ),
                 const SizedBox(height: 40),
@@ -122,6 +123,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                 ),
               ],
             ),
+           ),
           ),
         ),
       ),
