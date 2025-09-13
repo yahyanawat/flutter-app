@@ -51,38 +51,50 @@ class _WeatherScreenState extends State<WeatherScreen> {
 
     const apiKey = '68bcd70880f7c981758696okua3f99c';
     final geocodingUrl =
-        'https://geocode.maps.co/search?q=$city,$country&api_key=$apiKey';
+        'https://api.geoapify.com/v1/geocode/search?text=$city%2C%20$country&apiKey=$apiKey';
 
     try {
       final geocodingResponse = await http.get(Uri.parse(geocodingUrl));
 
       if (geocodingResponse.statusCode == 200) {
         final geocodingData = json.decode(geocodingResponse.body);
-        if (geocodingData.isNotEmpty) {
-          final lat = geocodingData[0]['lat'];
-          final lon = geocodingData[0]['lon'];
+        if (geocodingData['features'].isNotEmpty) {
+          final bestMatch = geocodingData['features'][0];
+          final confidence = bestMatch['properties']['rank']['confidence'];
 
-          final weatherUrl =
-              'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current_weather=true';
+          if (confidence >= 0.8) {
+            final lat = bestMatch['properties']['lat'];
+            final lon = bestMatch['properties']['lon'];
+            final formattedLocation = bestMatch['properties']['formatted'];
 
-          final weatherResponse = await http.get(Uri.parse(weatherUrl));
+            final weatherUrl =
+                'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current_weather=true';
 
-          if (weatherResponse.statusCode == 200) {
-            final weatherData = json.decode(weatherResponse.body);
-            setState(() {
-              _temperature =
-                  weatherData['current_weather']['temperature'].toString();
-              _weatherCode =
-                  weatherData['current_weather']['weathercode'].toString();
-              _location = '$city, $country';
-              _isLoading = false;
-            });
+            final weatherResponse = await http.get(Uri.parse(weatherUrl));
+
+            if (weatherResponse.statusCode == 200) {
+              final weatherData = json.decode(weatherResponse.body);
+              setState(() {
+                _temperature =
+                    weatherData['current_weather']['temperature'].toString();
+                _weatherCode =
+                    weatherData['current_weather']['weathercode'].toString();
+                _location = formattedLocation;
+                _isLoading = false;
+              });
+            } else {
+              // Handle weather API error
+              setState(() {
+                _isLoading = false;
+              });
+              print('Failed to load weather data');
+            }
           } else {
-            // Handle weather API error
+            // Handle low confidence
             setState(() {
               _isLoading = false;
             });
-            print('Failed to load weather data');
+            print('Location not found with high confidence');
           }
         } else {
           // Handle geocoding not found
