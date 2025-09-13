@@ -135,13 +135,15 @@ class _WeatherScreenState extends State<WeatherScreen> {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                final city = _cityController.text;
-                final country = _countryController.text;
-                if (city.isNotEmpty && country.isNotEmpty) {
-                  _fetchWeather(city, country);
-                }
-              },
+              onPressed: _isLoading
+                  ? null
+                  : () {
+                      final city = _cityController.text;
+                      final country = _countryController.text;
+                      if (city.isNotEmpty && country.isNotEmpty) {
+                        _fetchWeather(city, country);
+                      }
+                    },
               child: const Text('Get Weather'),
             ),
             const SizedBox(height: 20),
