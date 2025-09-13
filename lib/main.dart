@@ -124,6 +124,12 @@ class _WeatherScreenState extends State<WeatherScreen> {
                 labelText: 'City',
                 border: OutlineInputBorder(),
               ),
+              onSubmitted: (_) {
+                if (_cityController.text.isNotEmpty &&
+                    _countryController.text.isNotEmpty) {
+                  _fetchWeather(_cityController.text, _countryController.text);
+                }
+              },
             ),
             const SizedBox(height: 10),
             TextField(
@@ -132,6 +138,12 @@ class _WeatherScreenState extends State<WeatherScreen> {
                 labelText: 'Country',
                 border: OutlineInputBorder(),
               ),
+              onSubmitted: (_) {
+                if (_cityController.text.isNotEmpty &&
+                    _countryController.text.isNotEmpty) {
+                  _fetchWeather(_cityController.text, _countryController.text);
+                }
+              },
             ),
             const SizedBox(height: 20),
             ElevatedButton(
