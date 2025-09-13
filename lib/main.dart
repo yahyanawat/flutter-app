@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'weather_icons.dart';
+import 'security/api_keys.dart' as api_keys;
 
 void main() {
   runApp(const WeatherApp());
@@ -49,9 +50,8 @@ class _WeatherScreenState extends State<WeatherScreen> {
       _isLoading = true;
     });
 
-    const apiKey = '68bcd70880f7c981758696okua3f99c';
     final geocodingUrl =
-        'https://api.geoapify.com/v1/geocode/search?text=$city%2C%20$country&apiKey=$apiKey';
+        'https://api.geoapify.com/v1/geocode/search?text=$city%2C%20$country&apiKey=${api_keys.geoapifyApiKey}';
 
     try {
       final geocodingResponse = await http.get(Uri.parse(geocodingUrl));
